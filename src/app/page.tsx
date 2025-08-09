@@ -3,12 +3,10 @@ import { useState, useRef, useEffect } from "react";
 
 export default function Home() {
   const [message, setMessage] = useState("");
-  const [chat, setChat] = useState<{ role: "user" | "bot"; content: string }[]>(
-    []
-  );
+  const [chat, setChat] = useState<{ role: "user" | "bot"; content: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [model, setModel] = useState("gpt-5-nano"); // default model
+  const [model, setModel] = useState("gpt-5-nano"); // Default model
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -19,9 +17,9 @@ export default function Home() {
 
     setChat((prev) => [...prev, userMessage]);
     setMessage("");
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-    }
+    
+    resetTextarea();
+
     setLoading(true);
 
     try {
@@ -30,7 +28,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMessage.content,
-          model, // send selected model to API
+          model,
         }),
       });
 
@@ -50,6 +48,12 @@ export default function Home() {
       ]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const resetTextarea = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
     }
   };
 
@@ -108,19 +112,8 @@ export default function Home() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {chat.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex ${
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`px-4 py-2 rounded-lg max-w-[75%] text-sm whitespace-pre-wrap ${
-                    msg.role === "user"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100"
-                  }`}
-                >
+              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`px-4 py-2 rounded-lg max-w-[75%] text-sm whitespace-pre-wrap ${msg.role === "user" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100"}`}>
                   {msg.content}
                 </div>
               </div>
@@ -148,7 +141,7 @@ export default function Home() {
                 value={message}
                 onChange={(e) => {
                   setMessage(e.target.value);
-                  e.target.style.height = "auto";
+                  resetTextarea();
                   e.target.style.height = `${e.target.scrollHeight}px`;
                 }}
                 onKeyDown={(e) => {
