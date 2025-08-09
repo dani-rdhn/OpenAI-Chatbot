@@ -8,6 +8,7 @@ export default function Home() {
   );
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [model, setModel] = useState("gpt-5-nano"); // default model
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -16,22 +17,21 @@ export default function Home() {
 
     const userMessage = { role: "user" as const, content: message };
 
-    // append the user's message so it shows up immediately
     setChat((prev) => [...prev, userMessage]);
-
-    // clear and reset textarea height
     setMessage("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
-
     setLoading(true);
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.content }),
+        body: JSON.stringify({
+          message: userMessage.content,
+          model, // send selected model to API
+        }),
       });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -53,7 +53,6 @@ export default function Home() {
     }
   };
 
-  // Scroll to bottom when chat updates or loading changes
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat, loading]);
@@ -64,7 +63,7 @@ export default function Home() {
         {/* Left Sidebar */}
         <aside className="hidden md:block w-64 border-r bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-4">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="font-bold text-lg">Chat History</h2>
+            <h2 className="font-bold text-lg">Settings</h2>
             <button
               onClick={() => setDarkMode((prev) => !prev)}
               className="px-2 py-1 rounded-md bg-gray-200 dark:bg-gray-700 hover:opacity-80 text-sm"
@@ -72,16 +71,35 @@ export default function Home() {
               {darkMode ? "☀️" : "🌙"}
             </button>
           </div>
-          <p className="text-gray-400">{chat.length === 0 ? "No chats yet" : `${chat.length} messages`}</p>
+
+          {/* Model Selector */}
+          <label className="block mb-1 text-sm font-medium">Model</label>
+          <select
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            className="w-full border rounded-md p-2 text-sm dark:bg-gray-700 dark:border-gray-600"
+          >
+            <option value="gpt-4o-mini">gpt-4o-mini (fast, cheaper)</option>
+            <option value="gpt-5-nano">gpt-5-nano (fast, cheaper)</option>
+            <option value="gpt-5-mini">gpt-5-mini (more capable)</option>
+          </select>
         </aside>
 
         {/* Chat Section */}
         <div className="flex flex-col flex-1">
-          {/* Top Bar for Mobile Theme Toggle */}
-          <div className="md:hidden border-b bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-2 flex justify-end">
+          <div className="md:hidden border-b bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-2 flex justify-between items-center">
+            <select
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              className="border rounded-md p-1 text-sm dark:bg-gray-700 dark:border-gray-600"
+            >
+              <option value="gpt-4o-mini">gpt-4o-mini</option>
+              <option value="gpt-5-nano">gpt-5-nano</option>
+              <option value="gpt-5-mini">gpt-5-mini</option>
+            </select>
             <button
               onClick={() => setDarkMode((prev) => !prev)}
-              className="px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-700 hover:opacity-80 text-sm"
+              className="ml-2 px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-700 hover:opacity-80 text-sm"
             >
               {darkMode ? "☀️" : "🌙"}
             </button>
@@ -92,7 +110,9 @@ export default function Home() {
             {chat.map((msg, i) => (
               <div
                 key={i}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex ${
+                  msg.role === "user" ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
                   className={`px-4 py-2 rounded-lg max-w-[75%] text-sm whitespace-pre-wrap ${
@@ -129,7 +149,7 @@ export default function Home() {
                 onChange={(e) => {
                   setMessage(e.target.value);
                   e.target.style.height = "auto";
-                  e.target.style.height = `${e.target.scrollHeight}px`; // Auto expand
+                  e.target.style.height = `${e.target.scrollHeight}px`;
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {

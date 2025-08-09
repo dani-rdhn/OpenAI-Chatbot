@@ -6,12 +6,10 @@ const openai = new OpenAI({
 
 export async function POST(req) {
   try {
-    const { message } = await req.json();
+    const { message, model } = await req.json();
 
     const completion = await openai.chat.completions.create({
-    //   model: "gpt-4o-mini", // cheaper + fast
-    //   model: "gpt-5-nano", // cheaper + fast
-      model: "gpt-5-mini", // cheaper + fast
+      model: model || "gpt-5-nano", // fallback if none provided
       messages: [{ role: "user", content: message }],
     });
 
@@ -21,6 +19,9 @@ export async function POST(req) {
     );
   } catch (error) {
     console.error(error);
-    return new Response(JSON.stringify({ error: "Something went wrong" }), { status: 500 });
+    return new Response(
+      JSON.stringify({ error: "Something went wrong" }),
+      { status: 500 }
+    );
   }
 }
